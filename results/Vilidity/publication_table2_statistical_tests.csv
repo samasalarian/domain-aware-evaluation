@@ -1,0 +1,5 @@
+Comparison,Metric,Mean Difference,Cohen's d,Effect Size,P-value (permutation),P-value (FDR),Significant (FDR < 0.05)
+Evo2-40b vs Natural,Median ORF Length (genome-level),-126.33,-4.522,large,0.0000,0.0000,Yes
+Evo2-7b vs Natural,Median ORF Length (genome-level),-60.50,-3.381,large,0.2531,0.2531,No
+Evo2-40b vs Natural,% No Pfam Hit (genome-level),77.16,74.518,large,0.2523,0.2523,No
+Evo2-7b vs Natural,% No Pfam Hit (genome-level),77.87,38.333,large,0.2447,0.2523,No

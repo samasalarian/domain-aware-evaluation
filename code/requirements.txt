@@ -1,0 +1,11 @@
+# Core libraries
+pandas==2.3.3
+numpy==1.26.0
+matplotlib==3.8.0
+seaborn==0.13.2
+scipy==1.16.3
+statsmodels==0.14.6
+scikit-learn==1.7.2
+biopython>=1.81
+python-dateutil==2.9.0.post0
+pytz==2025.2

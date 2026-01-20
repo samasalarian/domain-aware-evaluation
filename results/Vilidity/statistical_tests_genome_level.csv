@@ -1,0 +1,5 @@
+comparison,metric,n_natural,n_synthetic,natural_value,synthetic_mean,synthetic_std,mean_difference,p_value_permutation,cohens_d,test_type,p_value_fdr,significant_fdr_0.05
+Evo2-40b vs Natural,Median ORF Length (genome-level),1,3,287.0,160.66666666666666,27.934447074057744,-126.33333333333334,0.0,-4.522492712972186,permutation,0.0,True
+Evo2-7b vs Natural,Median ORF Length (genome-level),1,3,287.0,226.5,17.89553016817328,-60.5,0.2531,-3.3807324751740313,permutation,0.2531,False
+Evo2-40b vs Natural,% No Pfam Hit (genome-level),1,3,15.674603174603174,92.83811247857659,1.0354960257598347,77.16350930397341,0.2523,74.51840218058949,permutation,0.2523,False
+Evo2-7b vs Natural,% No Pfam Hit (genome-level),1,3,15.674603174603174,93.54359728927885,2.0313881683071857,77.86899411467567,0.2447,38.33289734062306,permutation,0.2523,False

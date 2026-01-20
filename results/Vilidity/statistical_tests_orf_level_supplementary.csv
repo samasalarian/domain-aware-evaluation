@@ -1,0 +1,3 @@
+comparison,metric,n_natural,n_synthetic,mean_natural,mean_synthetic,mann_whitney_U,p_value,rank_biserial_r,cohens_d,note,p_value_fdr,significant_fdr_0.05
+Evo2-40b vs Natural,"ORF Length (ORF-level, pooled)",504,913,355.7420634920635,233.3012048192771,316183.0,1.6643603411335804e-31,-0.3742545941341122,-0.5295277207327517,Supplementary - assumes independence of ORFs,3.3287206822671607e-31,True
+Evo2-7b vs Natural,"ORF Length (ORF-level, pooled)",504,1392,355.7420634920635,327.382183908046,397836.5,7.899517461867977e-06,-0.1341352513227514,-0.07158309703228985,Supplementary - assumes independence of ORFs,7.899517461867977e-06,True

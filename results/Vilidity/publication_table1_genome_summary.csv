@@ -1,0 +1,4 @@
+Genome,N (ORFs),Median ORF Length (aa),Mean ORF Length ± SD,% No Pfam Hit
+Natural (M. genitalium),504,287,355.7 ± 265.3,15.67
+Evo2-40b (n=3),304,161 ± 28,228.0 ± 207.9,92.84 ± 1.04
+Evo2-7b (n=3),464,226 ± 18,330.9 ± 413.5,93.54 ± 2.03
