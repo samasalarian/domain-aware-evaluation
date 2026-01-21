@@ -19,6 +19,9 @@ cd domain-aware-evaluation
 ```bash
 pip install -r requirements.txt
 ```
+## Data
+
+All datasets are preprocessed and organized in the `data/` directory. For detailed information about data sources, organization, and file formats, see [DATA.md](DATA.md).
 
 ## Usage
 
@@ -42,3 +45,5 @@ python code/VEP.py
 ## Output
 
 All generated results will be saved in the `outputs/` folder.
+
+
