@@ -1,6 +1,6 @@
 # Domain-Aware Evaluation
 
-This repository contains code for domain-aware evaluation of Evo2.
+This repository contains code for domain-aware evaluation of Evo2 results.
 
 ## Prerequisites
 
