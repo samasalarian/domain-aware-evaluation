@@ -31,7 +31,6 @@ BOOTSTRAP_CI = 0.95           # Confidence interval level (0.95 = 95% CI)
 RANDOM_SEED = 42              # Random seed for reproducibility
 
 # Visualization parameters
-N_EXAMPLE_CATEGORIES = 4      # Number of categories to show in ROC/PR curves
 FIGURE_DPI = 300              # Resolution for saved figures
 
 # ============================================================================
@@ -291,7 +290,7 @@ def merge_datasets(file_7b, file_40b, dataset_name):
         )
         
         if coords_match:
-            print(f"\n✓ Datasets are perfectly aligned (verified row-by-row)")
+            print(f"\n Datasets are perfectly aligned (verified row-by-row)")
             
             # Use row-based matching
             df_merged = pd.DataFrame({
@@ -305,7 +304,7 @@ def merge_datasets(file_7b, file_40b, dataset_name):
                 'score_40b': -df_40b_sorted['llr']  # NEGATIVE LLR
             })
         else:
-            print(f"\n⚠ Same row count but coordinates don't match - using coordinate-based merge")
+            print(f"\n Same row count but coordinates don't match - using coordinate-based merge")
             
             # Fall back to coordinate-based merge
             df_merged = df_7b[merge_cols + ['label', 'category', 'llr']].merge(
@@ -320,7 +319,7 @@ def merge_datasets(file_7b, file_40b, dataset_name):
             df_merged['score_40b'] = -df_merged['score_40b']  # NEGATIVE LLR
     else:
         # Different row counts - use coordinate-based merge
-        print(f"\n⚠ Different row counts - using coordinate-based merge")
+        print(f"\n Different row counts - using coordinate-based merge")
         
         df_merged = df_7b[merge_cols + ['label', 'category', 'llr']].merge(
             df_40b[merge_cols + ['llr']],
@@ -339,14 +338,15 @@ def merge_datasets(file_7b, file_40b, dataset_name):
     
     # Filter out Unclassified category
     if 'Unclassified' in df_merged['category'].values:
-        n_unclassified = len(df_merged[df_merged['category'] == 'Unclassified'])
-        df_merged = df_merged[df_merged['category'] != 'Unclassified']
-        print(f"\n✓ Removed Unclassified category (n={n_unclassified} variants)")
+        n_unclassified = (df_merged['category'] == 'Unclassified').sum()
+        df_merged.loc[df_merged['category'] == 'Unclassified', 'category'] = 'Other'
+        print(f"\n Renamed Unclassified → Other (n={n_unclassified} variants)")
         print(f"Final dataset shape: {df_merged.shape}")
         print(f"Final categories: {df_merged['category'].nunique()}")
         print(f"Final distribution:\n{df_merged['category'].value_counts()}")
+
     
-    print(f"\n✓ Using NEGATIVE LLR scores (-llr) for analysis")
+    print(f"\nUsing NEGATIVE LLR scores (-llr) for analysis")
     
     return df_merged
 
@@ -421,117 +421,43 @@ def create_forest_plot(results_df, dataset_name, output_file):
     
     return fig
 
-def create_roc_pr_curves(df, results_df, dataset_name, output_file, n_examples=None):
+
+def create_results_table(results_df, dataset_name, output_file):
     """
-    Create ROC and PR curves for selected trait categories.
-    Uses global N_EXAMPLE_CATEGORIES and FIGURE_DPI.
+    Create a clean table of per-category metrics for both models.
+    Sorted by AUROC of the 40B model (descending).
     """
-    if n_examples is None:
-        n_examples = N_EXAMPLE_CATEGORIES
+    # Select and order columns for display
+    table_df = results_df[[
+        'category', 'n_total', 
+        'auroc_7b', 'auroc_40b', 
+        'auprc_7b', 'auprc_40b'
+    ]].copy()
     
-    # Select categories: best gain, near-zero, worst (if any)
-    results_sorted = results_df.sort_values('delta_auroc', ascending=False)
+    # Sort by 40B AUROC (descending)
+    table_df = table_df.sort_values('auroc_40b', ascending=False)
     
-    selected = []
+    # Rename columns for cleaner display
+    table_df = table_df.rename(columns={
+        'category': 'Category',
+        'n_total': 'n_variants',
+        'auroc_7b': 'AUROC_7B',
+        'auroc_40b': 'AUROC_40B',
+        'auprc_7b': 'AUPRC_7B',
+        'auprc_40b': 'AUPRC_40B'
+    })
     
-    # Best improvement
-    if len(results_sorted) > 0:
-        best_cat = results_sorted.iloc[0]['category']
-        selected.append(best_cat)
+    # Save to CSV
+    table_df.to_csv(output_file, index=False)
+    print(f"Saved results table to: {output_file}")
     
-    # Near-zero change (avoid duplicates)
-    near_zero = results_sorted.iloc[(results_sorted['delta_auroc'].abs()).argsort()[:1]]
-    if len(near_zero) > 0:
-        near_zero_cat = near_zero.iloc[0]['category']
-        if near_zero_cat not in selected:
-            selected.append(near_zero_cat)
+    # Print formatted table
+    print(f"\n{dataset_name} - Per-Category Metrics:")
+    print("=" * 80)
+    print(table_df.to_string(index=False))
+    print("=" * 80)
     
-    # Worst (negative if exists) - avoid duplicates
-    if len(results_sorted) > 2:
-        worst_cat = results_sorted.iloc[-1]['category']
-        if worst_cat not in selected:
-            selected.append(worst_cat)
-    
-    # One more middle category if available - avoid duplicates
-    if len(results_sorted) > 3 and len(selected) < n_examples:
-        mid_idx = len(results_sorted) // 2
-        mid_cat = results_sorted.iloc[mid_idx]['category']
-        if mid_cat not in selected:
-            selected.append(mid_cat)
-    
-    # If we still need more categories and have them available
-    remaining_idx = 1
-    while len(selected) < n_examples and len(selected) < len(results_sorted):
-        if remaining_idx >= len(results_sorted):
-            break
-        candidate = results_sorted.iloc[remaining_idx]['category']
-        if candidate not in selected:
-            selected.append(candidate)
-        remaining_idx += 1
-    
-    selected = selected[:n_examples]
-    
-    # Create subplots
-    n_cats = len(selected)
-    fig, axes = plt.subplots(2, n_cats, figsize=(5*n_cats, 8))
-    
-    if n_cats == 1:
-        axes = axes.reshape(2, 1)
-    
-    for idx, category in enumerate(selected):
-        df_cat = df[df['category'] == category]
-        y_true = df_cat['label'].values
-        y_score_7b = df_cat['score_7b'].values
-        y_score_40b = df_cat['score_40b'].values
-        
-        # Get metrics
-        cat_results = results_df[results_df['category'] == category].iloc[0]
-        
-        # ROC curve
-        ax_roc = axes[0, idx]
-        fpr_7b, tpr_7b, _ = roc_curve(y_true, y_score_7b)
-        fpr_40b, tpr_40b, _ = roc_curve(y_true, y_score_40b)
-        
-        ax_roc.plot(fpr_7b, tpr_7b, label=f'7B (AUC={cat_results.auroc_7b:.3f})', 
-                   linewidth=2, color='blue')
-        ax_roc.plot(fpr_40b, tpr_40b, label=f'40B (AUC={cat_results.auroc_40b:.3f})', 
-                   linewidth=2, color='red')
-        ax_roc.plot([0, 1], [0, 1], 'k--', alpha=0.3)
-        
-        ax_roc.set_xlabel('False Positive Rate', fontsize=10)
-        ax_roc.set_ylabel('True Positive Rate', fontsize=10)
-        ax_roc.set_title(f'{category}\nΔAUROC={cat_results.delta_auroc:.4f}', 
-                        fontsize=10, fontweight='bold')
-        ax_roc.legend(loc='lower right', fontsize=8)
-        ax_roc.grid(alpha=0.3)
-        
-        # PR curve
-        ax_pr = axes[1, idx]
-        prec_7b, rec_7b, _ = precision_recall_curve(y_true, y_score_7b)
-        prec_40b, rec_40b, _ = precision_recall_curve(y_true, y_score_40b)
-        
-        ax_pr.plot(rec_7b, prec_7b, label=f'7B (AP={cat_results.auprc_7b:.3f})', 
-                  linewidth=2, color='blue')
-        ax_pr.plot(rec_40b, prec_40b, label=f'40B (AP={cat_results.auprc_40b:.3f})', 
-                  linewidth=2, color='red')
-        
-        # Baseline (proportion of positives)
-        baseline = np.mean(y_true)
-        ax_pr.axhline(y=baseline, color='k', linestyle='--', alpha=0.3)
-        
-        ax_pr.set_xlabel('Recall', fontsize=10)
-        ax_pr.set_ylabel('Precision', fontsize=10)
-        ax_pr.set_title(f'ΔAUPRC={cat_results.delta_auprc:.4f}', fontsize=10)
-        ax_pr.legend(loc='best', fontsize=8)
-        ax_pr.grid(alpha=0.3)
-    
-    plt.suptitle(f'{dataset_name}: Representative ROC and PR Curves', 
-                 fontsize=14, fontweight='bold', y=1.00)
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=FIGURE_DPI, bbox_inches='tight')
-    print(f"Saved ROC/PR curves to: {output_file}")
-    
-    return fig
+    return table_df
 
 
 def analyze_dataset(file_7b, file_40b, dataset_name):
@@ -569,21 +495,21 @@ def analyze_dataset(file_7b, file_40b, dataset_name):
 
     os.makedirs("outputs", exist_ok=True)
     
-    # Save results
+    # Save comprehensive results
     output_csv = f'outputs/{dataset_name.lower().replace(" ", "_")}_results.csv'
     results_df.to_csv(output_csv, index=False)
-    print(f"\nSaved results to: {output_csv}")
+    print(f"\nSaved comprehensive results to: {output_csv}")
     
-    # Step 5: Create plots
+    # Step 5: Create visualizations
     print(f"\nGenerating visualizations...")
     
     # Forest plot
     forest_file = f'outputs/{dataset_name.lower().replace(" ", "_")}_forest_plot.png'
     create_forest_plot(results_df, dataset_name, forest_file)
     
-    # ROC/PR curves
-    curves_file = f'outputs/{dataset_name.lower().replace(" ", "_")}_roc_pr_curves.png'
-    create_roc_pr_curves(df, results_df, dataset_name, curves_file)
+    # Results table (replaces ROC/PR curves)
+    table_file = f'outputs/{dataset_name.lower().replace(" ", "_")}_metrics_table.csv'
+    create_results_table(results_df, dataset_name, table_file)
     
     print(f"\n{'='*60}")
     print(f"SIGNIFICANCE SUMMARY: {dataset_name}")
@@ -612,8 +538,6 @@ if __name__ == "__main__":
     print(f"  - Bootstrap CI: {BOOTSTRAP_CI*100:.0f}%")
     print(f"  - Random seed: {RANDOM_SEED}")
     print(f"  - Figure DPI: {FIGURE_DPI}")
-    print(f"  - Example categories in plots: {N_EXAMPLE_CATEGORIES}")
-    print(f"{'='*60}")
     print(f"{'='*60}")
     
     # Analyze ClinVar dataset
