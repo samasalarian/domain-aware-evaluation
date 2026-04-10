@@ -540,19 +540,19 @@ if __name__ == "__main__":
     print(f"  - Figure DPI: {FIGURE_DPI}")
     print(f"{'='*60}")
     
-    # Analyze ClinVar dataset
-    df_clinvar, results_clinvar = analyze_dataset(
-        'data/VEP/clinvar_snv_subset_10k_with_scores_7b.csv',
-        'data/VEP/clinvar_snv_subset_10k_with_scores_40b.csv',
-        'ClinVar'
-    )
+    # # Analyze ClinVar dataset
+    # df_clinvar, results_clinvar = analyze_dataset(
+    #     'data/VEP/clinvar_snv_subset_10k_with_scores_7b.csv',
+    #     'data/VEP/clinvar_snv_subset_10k_with_scores_40b.csv',
+    #     'ClinVar'
+    # )
     
-    # Analyze IDH dataset
-    df_idh, results_idh = analyze_dataset(
-        'data/VEP/idh_subset_with_scores_7b.csv',
-        'data/VEP/idh_subset_with_scores_40b.csv',
-        'IDH'
-    )
+    # # Analyze IDH dataset
+    # df_idh, results_idh = analyze_dataset(
+    #     'data/VEP/idh_subset_with_scores_7b.csv',
+    #     'data/VEP/idh_subset_with_scores_40b.csv',
+    #     'IDH'
+    # )
 
     df_braca, results_braca = analyze_dataset(
         'data/VEP/braca_subset_with_scores_7b.csv',
