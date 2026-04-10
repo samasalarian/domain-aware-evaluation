@@ -553,6 +553,12 @@ if __name__ == "__main__":
         'data/VEP/idh_subset_with_scores_40b.csv',
         'IDH'
     )
+
+    df_braca, results_braca = analyze_dataset(
+        'data/VEP/braca_subset_with_scores_7b.csv',
+        'data/VEP/braca_subset_with_scores_40b.csv',
+        'BRACA'
+    )
     
     print("\n" + "="*60)
     print("ANALYSIS COMPLETE!")
